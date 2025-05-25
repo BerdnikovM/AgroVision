@@ -48,7 +48,7 @@ class ExportPage(QWidget):
         header_layout.addStretch()
 
         # Title label - centered
-        title_label = QLabel("Export")
+        title_label = QLabel("Экспорт")
         title_label.setFont(QFont("Arial", 18, QFont.Bold))
         title_label.setStyleSheet("color: white;")
         title_label.setAlignment(Qt.AlignCenter)
@@ -57,10 +57,24 @@ class ExportPage(QWidget):
         # Add stretch to push title to center
         header_layout.addStretch()
 
-        # Empty widget to balance the back button
-        empty_widget = QWidget()
-        empty_widget.setFixedSize(40, 40)
-        header_layout.addWidget(empty_widget)
+        # Refresh button
+        refresh_button = QPushButton("↻")
+        refresh_button.setToolTip("Обновить список файлов")
+        refresh_button.setFont(QFont("Arial", 16))
+        refresh_button.setFixedSize(40, 40)
+        refresh_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: white;
+                border: none;
+                border-radius: 20px;
+            }
+            QPushButton:hover {
+                background-color: #2a2a34;
+            }
+        """)
+        refresh_button.clicked.connect(self.load_export_files)
+        header_layout.addWidget(refresh_button)
 
         main_layout.addLayout(header_layout)
 
@@ -74,7 +88,7 @@ class ExportPage(QWidget):
         """)
 
         # File list section
-        file_group = QGroupBox("Export Files")
+        file_group = QGroupBox("Экспорт файлов")
         file_group.setStyleSheet("""
             QGroupBox {
                 background-color: #1a1a24;
@@ -119,7 +133,7 @@ class ExportPage(QWidget):
         file_layout.addWidget(self.file_list)
 
         # Data view section
-        data_group = QGroupBox("Data View")
+        data_group = QGroupBox("Таблица данных")
         data_group.setStyleSheet("""
             QGroupBox {
                 background-color: #1a1a24;
@@ -147,7 +161,7 @@ class ExportPage(QWidget):
         data_container_layout.setContentsMargins(0, 0, 0, 0)
 
         # File path label
-        self.file_path_label = QLabel("No file selected")
+        self.file_path_label = QLabel("Файл не выбран")
         self.file_path_label.setStyleSheet("color: #aaaaaa; background-color: #1a1a24;")
         self.file_path_label.setWordWrap(True)
         data_container_layout.addWidget(self.file_path_label)
@@ -198,7 +212,7 @@ class ExportPage(QWidget):
         data_container_layout.addWidget(self.data_table)
 
         # Export button
-        self.export_button = QPushButton("Export to CSV")
+        self.export_button = QPushButton("Экспорт в CSV")
         self.export_button.setStyleSheet("""
             QPushButton {
                 background-color: #2e8b57;
@@ -261,12 +275,12 @@ class ExportPage(QWidget):
 
         # Check if file exists
         if not os.path.exists(file_path):
-            self.file_path_label.setText(f"File not found: {file_path}")
+            self.file_path_label.setText(f"Файл не найден: {file_path}")
             self.export_button.setEnabled(False)
             return
 
         # Update file path label
-        self.file_path_label.setText(f"Data exported to {file_path}")
+        self.file_path_label.setText(f"Данные экспортируются в {file_path}")
 
         # Enable export button
         self.export_button.setEnabled(True)
@@ -308,7 +322,7 @@ class ExportPage(QWidget):
             self.data_table.setRowCount(1)
             self.data_table.setColumnCount(1)
             self.data_table.setHorizontalHeaderLabels(["Error"])
-            self.data_table.setItem(0, 0, QTableWidgetItem(f"Error loading CSV: {str(e)}"))
+            self.data_table.setItem(0, 0, QTableWidgetItem(f"Ошибка загрузки CSV: {str(e)}"))
 
     def export_to_csv(self):
         """Export data to a new CSV file"""
@@ -328,6 +342,6 @@ class ExportPage(QWidget):
                 # Copy file to destination
                 import shutil
                 shutil.copy(source_file, destination)
-                self.file_path_label.setText(f"File exported to: {destination}")
+                self.file_path_label.setText(f"Файл, экспортированный в: {destination}")
             except Exception as e:
-                self.file_path_label.setText(f"Error exporting file: {str(e)}")
+                self.file_path_label.setText(f"Ошибка при экспорте файла: {str(e)}")

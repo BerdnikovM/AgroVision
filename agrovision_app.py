@@ -164,7 +164,7 @@ class AgroVisionApp(QMainWindow):
         line.setStyleSheet("background-color: #2a2a34;")
         self.sidebar_layout.addWidget(line)
 
-        # Home button
+        # Кнопка Домой
         self.home_button = QPushButton("Главная")
         self.home_button.setFont(QFont("Arial", 10))
         self.home_button.setFixedHeight(50)
@@ -183,7 +183,7 @@ class AgroVisionApp(QMainWindow):
         self.home_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(0))
         self.sidebar_layout.addWidget(self.home_button)
 
-        # Detect button
+        # Кнопка обнаружения
         self.detect_button = QPushButton("Детекция")
         self.detect_button.setFont(QFont("Arial", 10))
         self.detect_button.setFixedHeight(50)
@@ -205,7 +205,7 @@ class AgroVisionApp(QMainWindow):
         self.detect_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(1))
         self.sidebar_layout.addWidget(self.detect_button)
 
-        # Visualization button
+        # Кнопка визуализации
         self.visualization_button = QPushButton("Визуализация")
         self.visualization_button.setFont(QFont("Arial", 10))
         self.visualization_button.setFixedHeight(50)
@@ -227,7 +227,7 @@ class AgroVisionApp(QMainWindow):
         self.visualization_button.clicked.connect(lambda: self.stacked_widget.setCurrentIndex(2))
         self.sidebar_layout.addWidget(self.visualization_button)
 
-        # Export button
+        # Кнопка экспорта
         self.export_button = QPushButton("Экспорт")
         self.export_button.setFont(QFont("Arial", 10))
         self.export_button.setFixedHeight(50)
@@ -271,17 +271,17 @@ class AgroVisionApp(QMainWindow):
             self.logo_label.setStyleSheet("color: white;")
         self.header_layout.addWidget(self.logo_label)
 
-        # Left spacer → Центрирование заголовка
+        # Левая проставка → Центрирование заголовка
         self.header_layout.addStretch()
 
-        # Home title
+        # Название дома
         self.title_label = QLabel("Главная")
         self.title_label.setFont(QFont("Arial", 16))
         self.title_label.setAlignment(Qt.AlignCenter)
         self.title_label.setStyleSheet("color: white;")
         self.header_layout.addWidget(self.title_label)
 
-        # Right spacer → Центрирование заголовка
+        # Правая проставка → Центрирование заголовка
         self.header_layout.addStretch()
 
         # Version label
@@ -290,7 +290,7 @@ class AgroVisionApp(QMainWindow):
         self.version_label.setStyleSheet("color: #7f8c8d;")
         self.header_layout.addWidget(self.version_label)
 
-        # Settings button
+        # Кнопка настройки
         self.settings_button = QPushButton("⚙")
         self.settings_button.setFont(QFont("Arial", 16))
         self.settings_button.setFixedSize(40, 40)
@@ -358,7 +358,7 @@ class AgroVisionApp(QMainWindow):
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(10)
 
-        # Header
+        # Заголовок
         hl = QHBoxLayout()
         icon_lbl = QLabel()
         # если icon — файл, загружаем pixmap, иначе — текст
@@ -377,14 +377,14 @@ class AgroVisionApp(QMainWindow):
         hl.addStretch()
         layout.addLayout(hl)
 
-        # Value
+        # Значение
         val_lbl = QLabel(value)
         val_lbl.setFont(QFont("Arial", 24, QFont.Bold))
         val_lbl.setStyleSheet("color: white;")
         val_lbl.setAlignment(Qt.AlignCenter)
         layout.addWidget(val_lbl)
 
-        # Subtitle
+        # Подзаголовок
         if subtitle:
             sub_lbl = QLabel(subtitle)
             sub_lbl.setFont(QFont("Arial", 12))
@@ -449,7 +449,7 @@ class AgroVisionApp(QMainWindow):
         log_title.setStyleSheet("color: white; margin-top: 10px;")
         self.dashboard_layout.addWidget(log_title)
 
-        # Log text area
+        # Текстовая область журнала
         self.log_output = QTextEdit()
         self.log_output.setReadOnly(True)
         self.log_output.setStyleSheet("""
@@ -465,7 +465,7 @@ class AgroVisionApp(QMainWindow):
         """)
         self.log_output.setFixedHeight(200)
 
-        # Add sample log entries
+        # Добавить примеры записей в журнале
         self.log_output.append("[INFO] Система инициализирована")
         self.log_output.append("[INFO] Ожидание начала сеанса...")
 
@@ -507,7 +507,7 @@ class AgroVisionApp(QMainWindow):
             self.cpu_time_label.setText(now)
 
     def update_processed_files_count(self):
-        # Get the count of files in the output folder
+        # Получить количество файлов в выходной папке
         output_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
         if os.path.exists(output_folder):
             file_count = len([f for f in os.listdir(output_folder) if os.path.isfile(os.path.join(output_folder, f))])
@@ -519,64 +519,64 @@ class AgroVisionApp(QMainWindow):
                     self.processed_label.setText(str(self.processed_count))
 
     def create_folders(self):
-        # Create output folder for visualization
+        # Создайте выходную папку для визуализации
         output_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
 
-        # Create export folder for export data
+        # Создайте папку экспорта для экспортируемых данных
         export_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "export")
         if not os.path.exists(export_folder):
             os.makedirs(export_folder)
 
-        # Create images folder if it doesn't exist
+        # Создайте папку images, если она не существует.
         images_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images")
         if not os.path.exists(images_folder):
             os.makedirs(images_folder)
 
-        # Create models folder if it doesn't exist
+        # Создайте папку models, если она не существует.
         models_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
         if not os.path.exists(models_folder):
             os.makedirs(models_folder)
 
     def set_sidebar_buttons_enabled(self, enabled):
-        """Enable or disable sidebar buttons except Home"""
+        """Включите или отключите кнопки боковой панели, кроме Home"""
         self.detect_button.setEnabled(enabled)
         self.visualization_button.setEnabled(enabled)
         self.export_button.setEnabled(enabled)
 
     def log_message(self, message):
-        """Add a timestamped message to the log output"""
+        """Добавьте сообщение с временной меткой в вывод журнала"""
         timestamp = datetime.now().strftime("[%H:%M:%S]")
         self.log_output.append(f"{timestamp} {message}")
 
     def toggle_session(self):
-        """Toggle between starting and stopping a session"""
+        """Переключение между запуском и остановкой сеанса"""
         if not self.session_active:
             self.start_session()
         else:
             self.stop_session()
 
     def start_session(self):
-        """Start a new session with system checks"""
+        """Начните новый сеанс с проверки системы"""
         self.log_message("Начата проверка системы...")
 
-        # Clear previous log entries
+        # Очистить предыдущие записи журнала
         self.log_output.clear()
         self.log_message("Начата проверка системы...")
 
-        # Simulate a brief delay for system check
+        # Имитация кратковременной задержки для проверки системы
         QApplication.processEvents()
         time.sleep(0.5)
 
-        # Check models folder
+        # Проверьте папку с моделями
         models_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
         if not os.path.exists(models_folder):
             self.log_message("Проверка папки Models: ПРОВАЛ! Папка не найдена.")
             self.log_message("Инициализация: Не удалось! Пожалуйста, создайте папку models.")
             return
 
-        # Check for model files
+        # Проверка наличия файлов моделей
         model_files = [f for f in os.listdir(models_folder) if
                        f.endswith('.pt') and os.path.isfile(os.path.join(models_folder, f))]
         if not model_files:
@@ -584,14 +584,14 @@ class AgroVisionApp(QMainWindow):
             self.log_message("Инициализация: Не удалось! Пожалуйста, добавьте файлы моделей в папку models.")
             return
 
-        # Log found models
+        # Журнал найденных моделей
         model_files_str = ", ".join(model_files)
-        self.log_message(f"Проверка папок с моделями: Найдено {len(model_files)} model(s). ({model_files_str})")
+        self.log_message(f"Проверка папок с моделями: Найдено {len(model_files)} модель(ей). ({model_files_str})")
 
-        # Check computing device (simulated)
+        # Контрольное вычислительное устройство (моделируемое)
         self.log_message("Вычислительное устройство: Процессор (моделируемый)")
 
-        # Check output and export folders
+        # Проверьте папки вывода и экспорта
         output_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
         export_folder = os.path.join(os.path.dirname(os.path.abspath(__file__)), "export")
 
@@ -603,11 +603,11 @@ class AgroVisionApp(QMainWindow):
             os.makedirs(export_folder)
             self.log_message("Создана папка export.")
 
-        # All checks passed
+        # Все проверки пройдены
         self.log_message("Инициализация: Успех!")
         self.log_message("Сеанс успешно начался.")
 
-        # Update UI
+        # Обновление пользовательского интерфейса
         self.session_active = True
         self.start_button.setText("Остановить сеанс")
         self.start_button.setStyleSheet("""
@@ -622,14 +622,14 @@ class AgroVisionApp(QMainWindow):
             }
         """)
 
-        # Enable sidebar buttons
+        # Включите кнопки боковой панели
         self.set_sidebar_buttons_enabled(True)
 
     def stop_session(self):
         """Stop the current session"""
         self.log_message("Сеанс остановлен.")
 
-        # Update UI
+        # Обновление пользовательского интерфейса
         self.session_active = False
         self.start_button.setText("Начать сеанс")
         self.start_button.setStyleSheet("""
@@ -644,7 +644,7 @@ class AgroVisionApp(QMainWindow):
             }
         """)
 
-        # Disable sidebar buttons and return to home page
+        # Отключите кнопки боковой панели и вернитесь на главную страницу
         self.set_sidebar_buttons_enabled(False)
         self.stacked_widget.setCurrentIndex(0)
 

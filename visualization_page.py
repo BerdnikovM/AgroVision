@@ -27,7 +27,7 @@ class VideoThread(QThread):
     def run(self):
         cap = cv2.VideoCapture(self.file_path)
         if not cap.isOpened():
-            print(f"Error: Could not open video file {self.file_path}")
+            print(f"Ошибка: Не удалось открыть видеофайл {self.file_path}")
             return
 
         # Get video properties
@@ -140,7 +140,7 @@ class VisualizationPage(QWidget):
         header_layout.addStretch()
 
         # Title label - centered
-        title_label = QLabel("Visualization")
+        title_label = QLabel("Визуализация")
         title_label.setFont(QFont("Arial", 18, QFont.Bold))
         title_label.setStyleSheet("color: white;")
         title_label.setAlignment(Qt.AlignCenter)
@@ -149,10 +149,24 @@ class VisualizationPage(QWidget):
         # Add stretch to push title to center
         header_layout.addStretch()
 
-        # Empty widget to balance the back button
-        empty_widget = QWidget()
-        empty_widget.setFixedSize(40, 40)
-        header_layout.addWidget(empty_widget)
+        # Refresh button
+        refresh_button = QPushButton("↻")
+        refresh_button.setToolTip("Обновить список файлов")
+        refresh_button.setFont(QFont("Arial", 16))
+        refresh_button.setFixedSize(40, 40)
+        refresh_button.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: white;
+                border: none;
+                border-radius: 20px;
+            }
+            QPushButton:hover {
+                background-color: #2a2a34;
+            }
+        """)
+        refresh_button.clicked.connect(self.load_output_files)
+        header_layout.addWidget(refresh_button)
 
         main_layout.addLayout(header_layout)
 
@@ -166,7 +180,7 @@ class VisualizationPage(QWidget):
         """)
 
         # File list section
-        file_group = QGroupBox("Output Files")
+        file_group = QGroupBox("Выходные файлы")
         file_group.setStyleSheet("""
             QGroupBox {
                 background-color: #1a1a24;
@@ -211,7 +225,7 @@ class VisualizationPage(QWidget):
         file_layout.addWidget(self.file_list)
 
         # Preview section
-        preview_group = QGroupBox("Preview")
+        preview_group = QGroupBox("Превью")
         preview_group.setStyleSheet("""
             QGroupBox {
                 background-color: #1a1a24;
@@ -249,7 +263,7 @@ class VisualizationPage(QWidget):
         self.preview_layout.setAlignment(Qt.AlignCenter)
 
         # Image/video display label
-        self.display_label = QLabel("No file selected")
+        self.display_label = QLabel("Файл не выбран")
         self.display_label.setAlignment(Qt.AlignCenter)
         self.display_label.setStyleSheet("color: #aaaaaa; background-color: #1a1a24;")
         self.display_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -384,7 +398,7 @@ class VisualizationPage(QWidget):
 
         # Check if file exists
         if not os.path.exists(file_path):
-            self.display_label.setText(f"File not found: {file_path}")
+            self.display_label.setText(f"Файл не найден: {file_path}")
             self.video_controls.hide()
             return
 
@@ -393,7 +407,7 @@ class VisualizationPage(QWidget):
 
         # Handle video files
         if file_ext in ['.mp4', '.avi', '.mov']:
-            self.display_label.setText("Loading video...")
+            self.display_label.setText("Загрузка видео...")
             self.video_controls.show()
             self.play_video(file_path)
 
@@ -412,11 +426,11 @@ class VisualizationPage(QWidget):
                     Qt.SmoothTransformation
                 ))
             else:
-                self.display_label.setText(f"Failed to load image: {file_path}")
+                self.display_label.setText(f"Не удалось загрузить изображение: {file_path}")
 
         # Handle unsupported files
         else:
-            self.display_label.setText(f"Unsupported file format: {file_ext}")
+            self.display_label.setText(f"Неподдерживаемый формат файла: {file_ext}")
             self.video_controls.hide()
 
     def play_video(self, file_path):
@@ -433,7 +447,7 @@ class VisualizationPage(QWidget):
             self.play_button.setText("⏸")
 
         except Exception as e:
-            self.display_label.setText(f"Error playing video: {str(e)}")
+            self.display_label.setText(f"Ошибка при воспроизведении видео: {str(e)}")
             self.video_controls.hide()
 
     def update_video_frame(self, qt_image):
