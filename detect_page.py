@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLa
 from PyQt5.QtGui import QIcon, QPixmap, QFont, QDragEnterEvent, QDropEvent, QImage
 from PyQt5.QtCore import Qt, QSize, pyqtSignal, QMimeData, QUrl, QThread, QTimer, QMutex
 
-# Импорт YOLO из ultralytics, если он доступен
+# Import YOLO from ultralytics if available
 try:
     from ultralytics import YOLO
 
@@ -24,10 +24,10 @@ except ImportError:
 
 
 class CameraThread(QThread):
-    """Нить для захвата и обработки сигнала с веб-камеры"""
-    frame_signal = pyqtSignal(QImage, list)  # Сигнал для отправки обработанных кадров и обнаружений
-    status_signal = pyqtSignal(str)  # Сигнал для отправки сообщений о состоянии
-    fps_signal = pyqtSignal(float)  # Сигнал для отправки обновлений FPS
+    """Thread for capturing and processing webcam feed"""
+    frame_signal = pyqtSignal(QImage, list)  # Signal to send processed frame and detections
+    status_signal = pyqtSignal(str)  # Signal to send status messages
+    fps_signal = pyqtSignal(float)  # Signal to send FPS updates
 
     def __init__(self, model_path, enable_preprocessing, parent=None):
         super().__init__(parent)
@@ -35,91 +35,91 @@ class CameraThread(QThread):
         self.enable_preprocessing = enable_preprocessing
         self.running = False
         self.mutex = QMutex()
-        self.camera_id = 0  # Идентификатор камеры по умолчанию
-        self.confidence_threshold = 0.25  # Порог доверия по умолчанию
+        self.camera_id = 0  # Default camera ID
+        self.confidence_threshold = 0.25  # Default confidence threshold
 
     def run(self):
-        """Функция основного потока для захвата и обработки сигнала с веб-камеры"""
+        """Main thread function to capture and process webcam feed"""
         self.running = True
         self.status_signal.emit("Инициализация камеры...")
 
-        # Попробуйте открыть камеру
+        # Try to open the camera
         cap = cv2.VideoCapture(self.camera_id)
         if not cap.isOpened():
             self.status_signal.emit("Ошибка: Не удалось открыть веб-камеру")
             self.running = False
             return
 
-        # Настройте свойства камеры для повышения производительности
+        # Set camera properties for better performance
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-        # Загрузите модель YOLO
+        # Load the YOLO model
         try:
             if ULTRALYTICS_AVAILABLE:
                 self.status_signal.emit("Загрузка модели YOLO...")
                 model = YOLO(self.model_path)
                 self.status_signal.emit("Модель успешно загружена")
             else:
-                self.status_signal.emit("Ultralytics не доступна. Обнаружение будет смоделировано.")
+                self.status_signal.emit("Ультралитикc не доступны. Обнаружение будет моделироваться.")
                 model = None
         except Exception as e:
-            self.status_signal.emit(f"Ошибка загрузки модели: {str(e)}")
+            self.status_signal.emit(f"Модель загрузки ошибок: {str(e)}")
             cap.release()
             self.running = False
             return
 
-        # Переменные для расчета FPS
+        # FPS calculation variables
         fps = 0
         frame_count = 0
         start_time = time.time()
 
-        # Основной цикл обработки
+        # Main processing loop
         while self.running:
             ret, frame = cap.read()
             if not ret:
                 self.status_signal.emit("Ошибка: Не удалось захватить кадр")
                 break
 
-            # Зеркальное отображение кадра для более естественного восприятия веб-камеры
+            # Mirror the frame for a more natural webcam experience
             frame = cv2.flip(frame, 1)
 
-            # Примените предварительную обработку, если она включена
+            # Apply preprocessing if enabled
             if self.enable_preprocessing:
                 frame = self.apply_clahe(frame)
 
-            # Технологическая рама с моделью YOLO
+            # Process frame with YOLO model
             detections = []
             if ULTRALYTICS_AVAILABLE and model:
                 results = model(frame, conf=self.confidence_threshold)
 
-                # Извлечение информации об обнаружении
+                # Extract detection information
                 if results and len(results) > 0:
                     r = results[0]
 
-                    # Обработка каждого обнаружения
+                    # Process each detection
                     for i in range(len(r.boxes)):
-                        # Получить координаты коробки
+                        # Get box coordinates
                         box = r.boxes[i].xyxy[0].cpu().numpy()
                         x1, y1, x2, y2 = box.astype(int)
 
-                        # Обрести уверенность и класс
+                        # Get confidence and class
                         conf = float(r.boxes[i].conf[0])
                         cls_id = int(r.boxes[i].cls[0])
                         cls_name = model.names[cls_id]
 
-                        # Добавить в список обнаружений
+                        # Add to detections list
                         detections.append({
                             'box': (x1, y1, x2, y2),
                             'conf': conf,
                             'class': cls_name
                         })
 
-                # Нарисуйте обнаруженные объекты на рамке
+                # Draw detections on the frame
                 frame = self.draw_detections(frame, detections)
             else:
-                # Моделирование обнаружения, если модель недоступна
-                if frame_count % 30 == 0:  # Добавляйте симулированные обнаружения каждые 30 кадров
+                # Simulate detections if model is not available
+                if frame_count % 30 == 0:  # Add simulated detections every 30 frames
                     num_detections = np.random.randint(1, 5)
                     for _ in range(num_detections):
                         x1 = np.random.randint(50, frame.shape[1] - 150)
@@ -137,79 +137,79 @@ class CameraThread(QThread):
                             'class': cls_name
                         })
 
-                # Нарисуйте смоделированные обнаружения
+                # Draw simulated detections
                 frame = self.draw_detections(frame, detections)
 
-            # Преобразование кадра в QImage для отображения на экране
+            # Convert frame to QImage for display
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             h, w, ch = rgb_frame.shape
             bytes_per_line = ch * w
             qt_image = QImage(rgb_frame.data, w, h, bytes_per_line, QImage.Format_RGB888)
 
-            # Выдать обработанный кадр
+            # Emit the processed frame
             self.frame_signal.emit(qt_image, detections)
 
-            # Вычисление и обновление FPS
+            # Calculate and update FPS
             frame_count += 1
             elapsed_time = time.time() - start_time
-            if elapsed_time >= 1.0:  # Обновление FPS каждую секунду
+            if elapsed_time >= 1.0:  # Update FPS every second
                 fps = frame_count / elapsed_time
                 self.fps_signal.emit(fps)
                 frame_count = 0
                 start_time = time.time()
 
-            # Сон для снижения нагрузки на процессор
+            # Sleep to reduce CPU usage
             self.msleep(1)
 
-        # Уборка
+        # Clean up
         cap.release()
         self.status_signal.emit("Камера остановлена")
 
     def stop(self):
-        """Остановите поток камеры"""
+        """Stop the camera thread"""
         self.running = False
         self.wait()
 
     def apply_clahe(self, img):
-        """Применение предварительной обработки CLAHE для повышения контрастности изображения"""
-        # Преобразование в цветовое пространство LAB
+        """Apply CLAHE preprocessing to enhance image contrast"""
+        # Convert to LAB color space
         lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
 
-        # Разделите каналы LAB
+        # Split the LAB channels
         l, a, b = cv2.split(lab)
 
-        # Примените CLAHE к каналу L
+        # Apply CLAHE to the L channel
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         cl = clahe.apply(l)
 
-        # Объедините улучшенный L-канал CLAHE с оригинальными каналами A и B.
+        # Merge the CLAHE enhanced L channel with the original A and B channels
         merged = cv2.merge((cl, a, b))
 
-        # Преобразование обратно в цветовое пространство RGB
+        # Convert back to BGR color space
         enhanced_img = cv2.cvtColor(merged, cv2.COLOR_LAB2BGR)
 
         return enhanced_img
 
     def draw_detections(self, frame, detections):
-        """Нарисуйте на рамке поля для обнаружения и надписи"""
+        """Draw detection boxes and labels on the frame"""
         for det in detections:
             x1, y1, x2, y2 = det['box']
             conf = det['conf']
             cls_name = det['class']
 
-            # Определите цвет в зависимости от класса
+            # Determine color based on class
             if cls_name.lower() == "weed":
-                color = (0, 0, 255)  # Красный для сорняков
+                color = (0, 0, 255)  # Red for weeds
             else:
-                color = (0, 255, 0)  # Зеленый для посевов
+                color = (0, 255, 0)  # Green for crops
 
-            # Нарисовать ограничительную рамку
+            # Draw bounding box
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
-            # Создайте ярлык с названием класса и уверенностью
+            # Create label with class name and confidence
             label = f"{cls_name}: {conf:.2f}"
 
-            # Рассчитайте размер и положение этикетки
+            # Calculate label size and position
             (label_width, label_height), baseline = cv2.getTextSize(
                 label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
@@ -275,6 +275,9 @@ class DetectionWorker(QThread):
                 progress = int((i / total_files) * 100)
                 self.progress_updated.emit(progress, f"Обработка {file_name} ({i + 1}/{total_files})...")
 
+                # Start timing the processing
+                start_time = time.time()
+
                 # Determine if it's an image or video
                 file_ext = os.path.splitext(file_path)[1].lower()
                 is_video = file_ext in ['.mp4', '.avi', '.mov']
@@ -290,20 +293,20 @@ class DetectionWorker(QThread):
                 output_file = os.path.join(output_dir, f"{os.path.splitext(file_name)[0]}_{timestamp}{file_ext}")
                 csv_file = os.path.join(export_dir, f"detection_{os.path.splitext(file_name)[0]}_{timestamp}.csv")
 
-                # Process the file
+                # Process the file and get actual detection counts
                 if is_video:
-                    self.process_video(model, file_path, output_file, csv_file)
+                    objects_count, weeds_count = self.process_video(model, file_path, output_file, csv_file)
                 else:
-                    self.process_image(model, file_path, output_file, csv_file)
+                    objects_count, weeds_count = self.process_image(model, file_path, output_file, csv_file)
 
-                # Emit result
-                process_time = f"{np.random.uniform(0.5, 5.0):.2f}"  # Simulated processing time
-                objects_count = np.random.randint(5, 50)  # Simulated object count
-                weeds_count = np.random.randint(0, 20)  # Simulated weed count
+                # Calculate actual processing time
+                end_time = time.time()
+                process_time = f"{end_time - start_time:.2f}"
 
+                # Emit result with actual values
                 self.result_ready.emit(file_name, process_time, objects_count, weeds_count, output_file)
 
-            self.progress_updated.emit(100, "Обнаружение завершено")
+            self.progress_updated.emit(100, "Детекция завершена")
             self.detection_finished.emit()
 
         except Exception as e:
@@ -324,7 +327,11 @@ class DetectionWorker(QThread):
         results = model(img)
         r = results[0]
 
-        # Save detection results to CSV
+        # Count total objects and weeds
+        total_objects = len(r.boxes)
+        weed_count = 0
+
+        # Save detection results to CSV and count weeds
         with open(csv_path, mode='w', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(["frame", "class", "confidence", "x1", "y1", "x2", "y2"])
@@ -338,11 +345,18 @@ class DetectionWorker(QThread):
                 # Class ID and name
                 cls_id = int(r.boxes.cls[i])
                 cls_name = model.names[cls_id]
+
+                # Count weeds
+                if cls_name.lower() == "weed":
+                    weed_count += 1
+
                 # Write row
                 writer.writerow([0, cls_name, f"{conf:.4f}", int(x1), int(y1), int(x2), int(y2)])
 
         # Save the annotated image
         r.save(filename=output_path)
+
+        return total_objects, weed_count
 
     def process_video(self, model, input_path, output_path, csv_path):
         # Open the video
@@ -359,6 +373,10 @@ class DetectionWorker(QThread):
         # Create video writer
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+
+        # Initialize counters
+        total_objects = 0
+        weed_count = 0
 
         # Prepare CSV file
         with open(csv_path, mode='w', newline='') as f:
@@ -384,6 +402,10 @@ class DetectionWorker(QThread):
                 results = model(frame)
                 r = results[0]
 
+                # Count objects in this frame
+                frame_objects = len(r.boxes)
+                total_objects += frame_objects
+
                 # Save all boxes for this frame
                 for i in range(len(r.boxes)):
                     # Coordinates
@@ -393,6 +415,11 @@ class DetectionWorker(QThread):
                     # Class ID and name
                     cls_id = int(r.boxes.cls[i])
                     cls_name = model.names[cls_id]
+
+                    # Count weeds
+                    if cls_name.lower() == "weed":
+                        weed_count += 1
+
                     # Write row
                     writer.writerow([frame_idx, cls_name, f"{conf:.4f}", int(x1), int(y1), int(x2), int(y2)])
 
@@ -409,6 +436,8 @@ class DetectionWorker(QThread):
         # Release resources
         cap.release()
         out.release()
+
+        return total_objects, weed_count
 
     def apply_clahe(self, img):
         # Convert to LAB color space
@@ -441,6 +470,9 @@ class DetectionWorker(QThread):
             progress = int((i / total_files) * 100)
             self.progress_updated.emit(progress, f"Моделирование обнаружения для {file_name} ({i + 1}/{total_files})...")
 
+            # Start timing
+            start_time = time.time()
+
             # Simulate processing time
             time.sleep(np.random.uniform(1.0, 3.0))
 
@@ -456,16 +488,27 @@ class DetectionWorker(QThread):
             output_file = os.path.join(output_dir, f"{os.path.splitext(file_name)[0]}_{timestamp}{file_ext}")
             csv_file = os.path.join(export_dir, f"detection_{os.path.splitext(file_name)[0]}_{timestamp}.csv")
 
-            # Simulate CSV creation
+            # Generate realistic detection counts for simulation
+            objects_count = np.random.randint(5, 20)
+            weeds_count = np.random.randint(0, min(objects_count, 10))  # Weeds can't exceed total objects
+
+            # Simulate CSV creation with consistent counts
             with open(csv_file, mode='w', newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(["frame", "class", "confidence", "x1", "y1", "x2", "y2"])
 
-                # Generate random detections
-                num_detections = np.random.randint(5, 20)
-                for j in range(num_detections):
+                # Generate detections matching the counts
+                weed_detections_written = 0
+                for j in range(objects_count):
                     frame = 0 if file_ext in ['.jpg', '.jpeg', '.png'] else np.random.randint(0, 100)
-                    cls_name = np.random.choice(["weed", "crop"])
+
+                    # Determine class based on remaining weed count
+                    if weed_detections_written < weeds_count:
+                        cls_name = "weed"
+                        weed_detections_written += 1
+                    else:
+                        cls_name = "crop"
+
                     conf = np.random.uniform(0.6, 0.95)
                     x1 = np.random.randint(0, 500)
                     y1 = np.random.randint(0, 500)
@@ -480,11 +523,11 @@ class DetectionWorker(QThread):
             except Exception as e:
                 print(f"Ошибка при копировании файла: {e}")
 
-            # Emit result
-            process_time = f"{np.random.uniform(0.5, 5.0):.2f}"
-            objects_count = np.random.randint(5, 50)
-            weeds_count = np.random.randint(0, 20)
+            # Calculate actual processing time
+            end_time = time.time()
+            process_time = f"{end_time - start_time:.2f}"
 
+            # Emit result with consistent simulated values
             self.result_ready.emit(file_name, process_time, objects_count, weeds_count, output_file)
 
         self.progress_updated.emit(100, "Моделирование завершено")
@@ -539,9 +582,9 @@ class DropArea(QFrame):
         self.browse_button.clicked.connect(self.browse_files)
         layout.addWidget(self.browse_button, alignment=Qt.AlignCenter)
 
-        # ограничиваем высоту жестко
+        # Set fixed height
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.setFixedHeight(120)  # или ваше желаемое min-height
+        self.setFixedHeight(120)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         if event.mimeData().hasUrls():
@@ -911,7 +954,7 @@ class DetectPage(QWidget):
         main_layout.addWidget(input_group)
 
         # Selected Files section
-        files_group = QGroupBox("Выбранные файлы")
+        files_group = QGroupBox("Входные файлы")
         files_group.setStyleSheet("""
             QGroupBox {
                 background-color: #1a1a24;
@@ -1162,7 +1205,7 @@ class DetectPage(QWidget):
 
         # Files button
         files_button = QPushButton("📁")
-        files_button.setToolTip("Переключение на обнаружение файлов")
+        files_button.setToolTip("Переключение на детекцию файлов")
         files_button.setFont(QFont("Arial", 16))
         files_button.setFixedSize(40, 40)
         files_button.setStyleSheet("""
@@ -1307,7 +1350,7 @@ class DetectPage(QWidget):
         controls_layout.addWidget(self.camera_preprocess_checkbox)
 
         # Confidence threshold
-        threshold_label = QLabel("Шкала уверенности")
+        threshold_label = QLabel("Порог уверенности")
         threshold_label.setFont(QFont("Arial", 12))
         threshold_label.setStyleSheet("color: white;")
         controls_layout.addWidget(threshold_label)
@@ -1435,13 +1478,13 @@ class DetectPage(QWidget):
         stats_layout.addWidget(self.total_detections_label)
 
         # Weed detections
-        self.weed_detections_label = QLabel("Weeds: 0")
+        self.weed_detections_label = QLabel("Сорняки: 0")
         self.weed_detections_label.setFont(QFont("Arial", 12))
         self.weed_detections_label.setStyleSheet("color: white;")
         stats_layout.addWidget(self.weed_detections_label)
 
         # Crop detections
-        self.crop_detections_label = QLabel("Crops: 0")
+        self.crop_detections_label = QLabel("Культура: 0")
         self.crop_detections_label.setFont(QFont("Arial", 12))
         self.crop_detections_label.setStyleSheet("color: white;")
         stats_layout.addWidget(self.crop_detections_label)
@@ -1490,7 +1533,7 @@ class DetectPage(QWidget):
             if model_files:
                 self.model_combo.setCurrentIndex(0)
                 self.camera_model_combo.setCurrentIndex(0)
-                self.model_loaded_label.setText(f"Загржуено: {os.path.join(models_dir, self.model_combo.currentText())}")
+                self.model_loaded_label.setText(f"Загружено: {os.path.join(models_dir, self.model_combo.currentText())}")
             else:
                 self.model_loaded_label.setText("В каталоге models не найдено ни одного файла модели")
         else:
@@ -1644,7 +1687,7 @@ class DetectPage(QWidget):
 
         # Update UI
         self.is_camera_active = True
-        self.camera_button.setText("Остановить камеру")
+        self.camera_button.setText("Стоп камера")
         self.camera_button.setStyleSheet("""
             QPushButton {
                 background-color: #cc3333;
@@ -1691,9 +1734,9 @@ class DetectPage(QWidget):
 
         # Reset statistics
         self.total_detections_label.setText("Всего детекций: 0")
-        self.weed_detections_label.setText("Weeds: 0")
-        self.crop_detections_label.setText("Crops: 0")
-        self.avg_confidence_label.setText("Ср. уверенность: 0.00")
+        self.weed_detections_label.setText("Сорняки: 0")
+        self.crop_detections_label.setText("Культура: 0")
+        self.avg_confidence_label.setText("Ср. Уверенность: 0.00")
         self.fps_label.setText("FPS: 0")
 
     def update_camera_frame(self, qt_image, detections):
@@ -1714,9 +1757,9 @@ class DetectPage(QWidget):
 
         # Update labels
         self.total_detections_label.setText(f"Всего детекций: {total_detections}")
-        self.weed_detections_label.setText(f"Weeds: {weed_count}")
-        self.crop_detections_label.setText(f"Crops: {crop_count}")
-        self.avg_confidence_label.setText(f"Ср. уверенность: {avg_conf:.2f}")
+        self.weed_detections_label.setText(f"Сорняки: {weed_count}")
+        self.crop_detections_label.setText(f"Культура: {crop_count}")
+        self.avg_confidence_label.setText(f"Ср. Уверенность: {avg_conf:.2f}")
 
     def update_camera_status(self, status_text):
         """Update the camera status label"""
@@ -1772,4 +1815,3 @@ class DetectPage(QWidget):
             self.camera_thread.wait()
 
         super().closeEvent(event)
-
