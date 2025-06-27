@@ -10,4 +10,14 @@ AgroVision is a modular computer vision system for real-time weed detection in a
 
 The project was initially developed and awarded first place during the "Intelligent Technologies in Agriculture" acceleration program. It was later improved and expanded as part of the "Startup as a Thesis" track and successfully defended with the highest grade.
 
+Скриншоты программы/Screenshots of the program
+![App Screenshot](Images/Interface1.png)
+![App Screenshot](Images/Interface2.png)
+![App Screenshot](Images/Interface3.png)
+![App Screenshot](Images/Interface4.png)
+![App Screenshot](Images/Interface5.png)
 
+Примеры детекций/Examples of detections
+![App detection](Images/Культура_пример_детекции_upscaled.png)
+![App detection](Images/сорняк_пример_детекции3_upscaled.jpg)
+![App detection](Images/сорняк_пример_деткции1_upscaled.jpg)
